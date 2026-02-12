@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ringing Reference App</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input { padding: 8px; width: 300px; margin-bottom: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background-color: #6b7f2a; color: white; }
+  </style>
+</head>
+<body>
+
+<h2>Species Database</h2>
+
+<input type="text" id="search" placeholder="Search species..." onkeyup="filterTable()">
+
+<table id="speciesTable">
+  <thead></thead>
+  <tbody></tbody>
+</table>
+
+<script>
+Papa.parse("data/species.csv", {
+  download: true,
+  header: true,
+  complete: function(results) {
+    let table = document.getElementById("speciesTable");
+    let thead = table.querySelector("thead");
+    let tbody = table.querySelector("tbody");
+
+    let headers = results.data[0];
+    let headerRow = "<tr>";
+    Object.keys(headers).forEach(key => {
+      headerRow += "<th>" + key + "</th>";
+    });
+    headerRow += "</tr>";
+    thead.innerHTML = headerRow;
+
+    results.data.forEach(row => {
+      let tr = "<tr>";
+      Object.values(row).forEach(value => {
+        tr += "<td>" + value + "</td>";
+      });
+      tr += "</tr>";
+      tbody.innerHTML += tr;
+    });
+  }
+});
+
+function filterTable() {
+  let input = document.getElementById("search").value.toLowerCase();
+  let rows = document.querySelectorAll("#speciesTable tbody tr");
+
+  rows.forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+  });
+}
+</script>
+
+</body>
+</html>
