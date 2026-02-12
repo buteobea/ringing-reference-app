@@ -1,63 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Ringing Reference App</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    input { padding: 8px; width: 300px; margin-bottom: 20px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background-color: #6b7f2a; color: white; }
-  </style>
+<meta charset="UTF-8">
+<title>Ringing Reference</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  margin: 0;
+  background: #f2f2f2;
+}
+
+header {
+  background: #6b7f2a;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 20px;
+}
+
+.search {
+  padding: 10px;
+  text-align: center;
+  background: white;
+}
+
+.search input {
+  width: 90%;
+  padding: 8px;
+}
+
+.card {
+  background: white;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.card:hover {
+  background: #e8e8e8;
+}
+
+.detail {
+  display: none;
+  padding: 15px;
+}
+
+.back {
+  color: #6b7f2a;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Species Database</h2>
+<header>Species</header>
 
-<input type="text" id="search" placeholder="Search species..." onkeyup="filterTable()">
+<div class="search">
+<input type="text" id="search" placeholder="Search..." onkeyup="filterSpecies()">
+</div>
 
-<table id="speciesTable">
-  <thead></thead>
-  <tbody></tbody>
-</table>
+<div id="list"></div>
+<div id="detail" class="detail"></div>
 
 <script>
+let speciesData = [];
+
 Papa.parse("data/species.csv", {
   download: true,
   header: true,
   complete: function(results) {
-    let table = document.getElementById("speciesTable");
-    let thead = table.querySelector("thead");
-    let tbody = table.querySelector("tbody");
-
-    let headers = results.data[0];
-    let headerRow = "<tr>";
-    Object.keys(headers).forEach(key => {
-      headerRow += "<th>" + key + "</th>";
-    });
-    headerRow += "</tr>";
-    thead.innerHTML = headerRow;
-
-    results.data.forEach(row => {
-      let tr = "<tr>";
-      Object.values(row).forEach(value => {
-        tr += "<td>" + value + "</td>";
-      });
-      tr += "</tr>";
-      tbody.innerHTML += tr;
-    });
+    speciesData = results.data;
+    renderList(speciesData);
   }
 });
 
-function filterTable() {
-  let input = document.getElementById("search").value.toLowerCase();
-  let rows = document.querySelectorAll("#speciesTable tbody tr");
+function renderList(data) {
+  let list = document.getElementById("list");
+  list.innerHTML = "";
 
-  rows.forEach(row => {
-    row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+  data.forEach((sp, index) => {
+    if (!sp.Scientific_Name) return;
+
+    list.innerHTML += `
+      <div class="card" onclick="showDetail(${index})">
+        <strong>${sp.Scientific_Name}</strong><br>
+        ${sp.English_Name}<br>
+        Ring: ${sp.Full_Grown_Ring}
+      </div>
+    `;
   });
+}
+
+function showDetail(index) {
+  let sp = speciesData[index];
+  document.getElementById("list").style.display = "none";
+
+  document.getElementById("detail").innerHTML = `
+    <div class="back" onclick="goBack()">← Back</div>
+    <h2>${sp.Scientific_Name}</h2>
+    <p><strong>English name:</strong> ${sp.English_Name}</p>
+    <p><strong>Full grown ring:</strong> ${sp.Full_Grown_Ring}</p>
+    <p><strong>Pulli ring:</strong> ${sp.Pulli_Ring}</p>
+    <p><strong>Alert:</strong> ${sp.Species_Alert}</p>
+    <p><strong>BTO Code:</strong> ${sp.BTO_Code_5} (${sp.BTO_Code_2})</p>
+    <p><strong>Avg Wing:</strong> ${sp.Avg_Wing_mm} mm</p>
+    <p><strong>Avg Mass:</strong> ${sp.Avg_Mass_g} g</p>
+  `;
+
+  document.getElementById("detail").style.display = "block";
+}
+
+function goBack() {
+  document.getElementById("detail").style.display = "none";
+  document.getElementById("list").style.display = "block";
+}
+
+function filterSpecies() {
+  let value = document.getElementById("search").value.toLowerCase();
+  let filtered = speciesData.filter(sp =>
+    sp.Scientific_Name?.toLowerCase().includes(value) ||
+    sp.English_Name?.toLowerCase().includes(value)
+  );
+  renderList(filtered);
 }
 </script>
 
